@@ -68,6 +68,22 @@ This will take a bit of time. This command will compile all the files in the pro
 make all 
 ```
 
+### setting up **environment variables**
+Environment variables usually describe the directories that the software works with. They are also used to configure the conditions under which the executables run. For example, you can toggle between serial and parallel processing modes. Although the environment variables are predefined, you may want to change them depending on your specific needs. 
+You can find the `environment_variables` file in the root directory of quantum ESPRESSO, that is `qe-6.5/environment_variables`.
+In this file, you can toggle between serial and parallel processing by commenting and uncommenting two lines of code.  
+For serial processing, you leave the `PARA_PREFIX` variable empty 
+```bash 
+PARA_PREFIX=" "
+# PARA_PREFIX="mpirun -np 4"
+```
+and for parallel processing, you set `PARA_PREFIX` to include a parallel prefix as follows 
+```bash 
+# PARA_PREFIX=" "
+PARA_PREFIX="mpirun -np 4"
+```
+where `mpirun -np 4` means that the `mpirun` runs your executables in parallel and the number `4` denotes the *number of processors* which `-np` stands for. 
+
 ## 5. Run Quantum ESPRESSO examples 
 Change directory to the `example01` folder. 
 ```bash 
