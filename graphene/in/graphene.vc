@@ -1,0 +1,54 @@
+#!/bin/sh
+
+cat > $prefix.vc.in <<EOF
+ &control
+  calculation = 'vc-relax'
+  title = 'Variable-cell relaxation of $prefix structure'
+  verbosity = 'high'
+  restart_mode = 'from_scratch'
+  outdir = '$TMP_DIR/'
+  prefix ='$prefix'
+  pseudo_dir = '$PSEUDO_DIR/'
+  nstep = 1000
+  iprint = 1
+  tprnfor = .TRUE.
+  tstress = .TRUE.
+  forc_conv_thr = 1.0d-7
+  etot_conv_thr = 1.0d-8
+ /
+ &system
+  ibrav = 4
+  A = 2.46000000
+  C = 20.00000000
+  nat = 2
+  ntyp = 1
+  nbnd = $num_bands
+  ecutwfc = $ecutwfc
+  ecutrho = $ecutrho
+  occupations = "smearing"
+  smearing    = "marzari-vanderbilt"
+  degauss     = 1.0d-4
+ /
+ &electrons
+  electron_maxstep = 100
+  conv_thr = 1.0d-8
+  mixing_mode = 'plain'
+  mixing_beta = 0.3d0
+  diagonalization = 'david'
+  diago_full_acc = .TRUE.
+ /
+ &ions
+  ion_dynamics = 'bfgs'
+  upscale = 20.0
+ /
+ &cell
+  cell_dofree = '2Dxy'
+ /
+ATOMIC_SPECIES
+ C 12.0106000  $pseudo_c
+ATOMIC_POSITIONS {angstrom}
+ C 0.00000000 -0.710140831  0.00000000
+ C 0.00000000  0.710140831  0.00000000
+K_POINTS {automatic}
+ $num_kx $num_ky $num_kz 0 0 0
+EOF
