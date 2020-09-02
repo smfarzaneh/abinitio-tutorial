@@ -25,12 +25,14 @@ $ECHO
 ENV_PATH=$QE_PATH/environment_variables
 # set the needed environment variables
 . $ENV_PATH
+# override bin path
+BIN_DIR=$QE_PATH/bin
 # override pseudopotential path
 PSEUDO_DIR=$THIS_DIR/pseudo
 
 # required executables, pseudopotentials, and directories
 QE_BIN_LIST="pw.x  bands.x"
-PSEUDO_LIST="$pseudo_si"
+PSEUDO_LIST="$pseudo_c"
 TMP_DIR="$THIS_DIR/temp"
 IN_DIR="$THIS_DIR/in"
 OUT_DIR="$THIS_DIR/out"
