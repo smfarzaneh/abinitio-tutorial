@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+def plot_band_structure(fig, ax, path="", prefix="graphene", valance_band_index=3, e_min = -5.0, e_max=5.0, k_special=[]):
+    # load band structure data from file
+    print('loading files from ' + path)
+    data = np.loadtxt(path)
+    k_vals = np.unique(data[:,0]) 
+    bands = []
+    num_k = len(k_vals)
+    num_band = len(data[data[:,0] == k_vals[0]])
+    # plot bands 
+    fermi = max(data[valance_band_index*num_k:(valance_band_index + 1)*num_k, 1])
+    for i in range(num_band):
+        ax.plot(k_vals, data[i*num_k:(i + 1)*num_k, 1] - fermi, 'k', linewidth=0.5)
+    ax.plot([min(k_vals), max(k_vals)], [0.0,0.0], color='gray', lw=0.5, alpha=0.6)
+    # plot high symmetry lines
+    for i in k_special: 
+        x1 = [i, i]
+        x2 = [e_min, e_max]
+        ax.plot(x1, x2, 'k--', lw=0.5, alpha=0.5)
+    # annotate plot 
+    k_labels = [r'$\Gamma$', r'$K$', r'$M$', r'$\Gamma$']
+    ax.set_xlim([min(k_vals), max(k_vals)])
+    ax.set_ylim([e_min, e_max])
+    plt.xticks(k_special, k_labels)
+    plt.ylabel(r'Energy (eV)')
+    # set title     
+    title = prefix.capitalize()
+    plt.title(title)
+    fig.set_size_inches(2.2, 3.36)
+    fig.savefig(prefix+".pdf", bbox_inches='tight', pad_inches=0.02)
+    return fermi
+
+fig, ax = plt.subplots(1, 1)
+plot_band_structure(fig, ax, path="out/graphene.dat.gnu", prefix="graphene", valance_band_index=3, e_min = -20.0, e_max = 10.0, k_special=[0.00000, 0.6667, 1.0000, 1.5774])

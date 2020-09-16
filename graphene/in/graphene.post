@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cat > $prefix.post.in << EOF
+ &bands
+  prefix  = '$prefix'
+  outdir = '$TMP_DIR/'
+  filband = '$prefix.dat'
+  lsym = .TRUE.
+ /
+EOF

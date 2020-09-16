@@ -62,7 +62,7 @@ The first entry is the atomic symbol. The next three are the coordinates of the 
 
 
 ## Set up main parameters
-The main parameters that you may want to change at different runs are listed in the beginning of the `run-graphene` files. 
+The main parameters that you may want to change at different runs are listed in the beginning of the `run-graphene` file. 
 ```bash
 #!/bin/sh
 
@@ -104,3 +104,83 @@ You can test the convergence of the calculations by redoing the calculations wit
 2. Total energy vs. number of k points: make sure the total energy converges as the number of k points increases, e.g., from `4X4X1` to `5X5X1` and etc.  
 3. Total energy vs. the lattice constant `A`: does the minimum energy happen for `A=2.46` Angstrom or some other number? Redo the calculations for different values of `A` and see how the energy behaves as a function of `A`.  
 **Note**: make sure to update the `y` coordinate of the `ATOMIC_POSITIONS` as you change `A`. 
+
+## Band Structure 
+In this section, having done the structural calculations, we try to calculate the band structure of graphene by performing a *non-self-consistent-field* (nscf) calculation followed by a *bands* calculation to find the band dispersion over a k path containing high symmetry points of the Brillouin zone. 
+
+## Non-self-consistent-field calculations 
+In order to get accurate band dispersions, one needs to perform band calculations on a relatively denser mesh than the one used in the *self-consistent-field* (scf) calculations. Since, the scf calculations provide us with the effective Kohn-Sham potential, we can use it to calculate the energies over a much denser mesh without the self consistency iterations. The input parameters for the nscf calculation is located in `in/graphene.nscf`. Most of the parameters are and must be the same as in `graphene.scf` file, especially the structural parameters such as the lattice constants and the atomic positions. The only parameters that are different are `calculation = 'nscf'` and `K_POINTS`.  
+
+The nscf tries to read the scf result from the `temp/` folder which contains the wavefunctions in a raw format. Therefore, you need to make sure that the scf calculation is performed before you run the nscf. 
+To run the nscf calculation the following commands, in the `run-graphene` file, are executed right after the scf calculations. You will need to run the `bash run-graphene` command in the terminal just like you did for the scf calculations earlier. 
+
+```bash
+# nscf calculation
+$ECHO "  running the nscf calculation...\c"
+# increase the number of k points 
+num_kx=16
+num_ky=16
+num_kz=1
+. $IN_DIR/$prefix.nscf
+$PW_COMMAND < $prefix.nscf.in > $prefix.nscf.out
+check_failure $?
+$ECHO " done"
+```
+
+**Note**: make sure to use the optimized lattice constant you found earlier in both scf and nscf files.  
+**Note**: If you have already done the scf calculations before, you can comment it out.  
+**Note**: The nscf might require huge disk memories depending on the number of points in the k space.  
+
+
+What this code does is that it calculates the wavefucntions over a dense k mesh and stores them in `temp/` and a log of the calculations is stored in `out/graphene.nscf.out` as well. As you can see the number of k points in an nscf calculation is generally larger than that of the scf calculation. While a grid of `16X16X1` might be suitable for band structure calculation, we will see in the future that it might be too coarse for the calculation of the *density of states* and therefore you may want to increase that even further. 
+
+
+## Bands calculations 
+Now we are getting closer to the spaghetti-like band structure. Having done the nscf calculations, we now calculate the bands over a specific k path in the Brillouin zone. The k path that is usually chosen in the case of a hexagonal lattice is `Gamma-K-M-Gamma` which is illustrated below.  
+
+<div align="center"><img src="fig/kpath.png" alt="graphene-k-path" width="200"/></div>  
+
+A k path that contains high symmetry points in the Brillouin zone can easily be described in Quantum ESPRESSO. The input parameters for *bands* calculations are listed in the `in/graphene.bands` file. Similar to the nscf file, most of the parameters in the bands file, except the `calculation = 'bands'` and the `K_POINTS`, are pretty much the same as the ones in the scf file. The `K_POINTS` are modified as follows  
+```fortran
+K_POINTS {tpiba_b}
+4 
+ gG 50
+ K 50
+ M 50 
+ gG 0
+```  
+
+The parameter `tpiba_b` means that the K points are defined relative to the primitive vectors of the reciprocal space. The number of high symmetry points `4` must be listed in the beginning. Then the high symmetry points are listed along with a number that determines the number of k points till the next high symmetry point along the k path. Therefore, the total number of k points in the above k path is 150. Also `gG` stands for the Gamma point. 
+
+Now, to perform the bands calculations, you will need to run the following commands, included in the `run-graphene` file. If you have already done the scf and the nscf calculations, you can comment out their corresponding commands. The following code executes the bands calculations.  
+```bash
+# bands calculation
+$ECHO "  running the bands calculation...\c"
+. $IN_DIR/$prefix.bands
+$PW_COMMAND < $prefix.bands.in > $prefix.bands.out
+check_failure $?
+$ECHO " done"
+```
+Remember, to run this script, again you will need to type the `bash run-graphene` in your terminal. The output log is going to be written in `out/graphene.bands.out`. 
+
+
+## Post processing bands 
+There is still one step remaining before you can get the spaghetti plot. Although we do have the eigenvalues and eigenstates of the system over the k path by performing the *bands* calculation, we still need to rearrange and sort the bands. That's what the post processing module does. The input parameters are listed in `in/graphene.post` file. 
+The following code in the `run-graphene` file executes the post processing code. 
+```bash
+# post processing bands 
+$ECHO "  post processing the bands...\c"
+. $IN_DIR/$prefix.post
+$POST_COMMAND < $prefix.post.in > $prefix.post.out
+check_failure $?
+$ECHO " done"
+```
+Note that this time we are using the `$POST_COMMAND` instead of the `$PW_COMMAND`. 
+As always, first by commenting out the script for the previous calculations and then  typing the following `bash run-graphene` in your terminal you can run the post processing calculations. Finally the output we were looking for is written in `graphene.dat.gnu` which contains the energies of the system in a format suitable for plotting. 
+
+## Plot the band structure 
+The band structure can be visualized by plotting the energies listed in the `graphene.dat.gnu` file. A simple *python* script is provided in `plot.py` file. To plot the band structure you only need to run this script in your terminal as follows.  
+```bash
+python plot.py
+```  
+This command tries to read the `out/graphene.dat.gnu` file and stores the band structure plot in a pdf file `graphene.pdf` in the same directory. 

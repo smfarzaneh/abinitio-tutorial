@@ -8,7 +8,7 @@ ecutrho=326.0
 num_kx=8
 num_ky=8
 num_kz=1
-num_bands=16
+num_bands=8
 
 THIS_DIR=`pwd`
 
@@ -82,14 +82,42 @@ $ECHO " done"
 
 # how to run executables
 PW_COMMAND="$PARA_PREFIX $BIN_DIR/pw.x $PARA_POSTFIX"
+POST_COMMAND="$PARA_PREFIX $BIN_DIR/bands.x $PARA_POSTFIX"
 
 $ECHO
 $ECHO "  running pw.x as:       $PW_COMMAND"
+$ECHO "  running bands.x as:    $POST_COMMAND"
 $ECHO
 
+# scf calculation
 $ECHO "  running the scf calculation...\c"
 . $IN_DIR/$prefix.scf
 $PW_COMMAND < $prefix.scf.in > $prefix.scf.out
+check_failure $?
+$ECHO " done"
+
+# nscf calculation
+$ECHO "  running the nscf calculation...\c"
+# increase the number of k points 
+num_kx=16
+num_ky=16
+num_kz=1
+. $IN_DIR/$prefix.nscf
+$PW_COMMAND < $prefix.nscf.in > $prefix.nscf.out
+check_failure $?
+$ECHO " done"
+
+# bands calculation
+$ECHO "  running the bands calculation...\c"
+. $IN_DIR/$prefix.bands
+$PW_COMMAND < $prefix.bands.in > $prefix.bands.out
+check_failure $?
+$ECHO " done"
+
+# post processing bands 
+$ECHO "  post processing the bands...\c"
+. $IN_DIR/$prefix.post
+$POST_COMMAND < $prefix.post.in > $prefix.post.out
 check_failure $?
 $ECHO " done"
 
