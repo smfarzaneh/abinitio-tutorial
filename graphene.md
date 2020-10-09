@@ -195,7 +195,7 @@ In this tutorial, we use a `24X24X1` mesh for the `nscf` calculation but for rel
 
 To calculate the DOS in Quantum ESPRESSO, first you will need to have performed an `scf` calculation with the typical number of k points, e.g. `8X8X1`. 
 Then, by increasing the number of k points, e.g. to `24X24X1`, you perform an `nscf` calculation to get the energies over a dense mesh. 
-The last step is to run the `projwfc` command (with `projwfc.x` as the executable) which projects the wavefunction into atomic orbitals and calculates local density of states. 
+The last step is to run the `projwfc` command (with `projwfc.x` as the executable) which projects the wavefunction into atomic orbitals and calculates the projected and the total density of states. 
 The following codes perform the described tasks.
 ```bash 
 ### density of states
@@ -235,7 +235,7 @@ $ECHO " done"
 Here `emin` and `emax` determine the energy window corresponding to the density of states. 
 These two parameters along with a few other parameters are listed in the `in/graphene.proj` file. 
 The other parameters such as `ngauss` and `degauss` are related to the broadening of the DOS. You can find more information about these in the Quantum ESPRESSO documentation. 
-The output of the DOS calculation is written in files such as `out/graphene.pdos_...`. 
+After commenting out the unnecessary parts in the `run-graphene` file and executing it, via `bash run-graphene` in your terminal, the output of the DOS calculation is written in files such as `out/graphene.pdos_...`. 
 
 ## Plot the density of states 
 The total density of states can be visualized by plotting the data in the `out/graphene.pdos_tot` file. The *python* script in `plot.py` file is modified to perform this task. To plot the density of states you need to uncomment the last two lines of codes  
