@@ -150,7 +150,7 @@ K_POINTS {tpiba_b}
  gG 0
 ```  
 
-The parameter `tpiba_b` means that the K points are defined relative to the primitive vectors of the reciprocal space. The number of high symmetry points `4` must be listed in the beginning. Then the high symmetry points are listed along with a number that determines the number of k points till the next high symmetry point along the k path. Therefore, the total number of k points in the above k path is 150. Also `gG` stands for the Gamma point. 
+The parameter `tpiba_b` means that the k points are defined relative to the primitive vectors of the reciprocal space. The number of high symmetry points `4` must be listed in the beginning. Then the high symmetry points are listed along with a number that determines the number of k points till the next high symmetry point along the k path. Therefore, the total number of k points in the above k path is 150. Also `gG` stands for the Gamma point. 
 
 Now, to perform the bands calculations, you will need to run the following commands, included in the `run-graphene` file. If you have already done the scf and the nscf calculations, you can comment out their corresponding commands. The following code executes the bands calculations.  
 ```bash
@@ -183,4 +183,68 @@ The band structure can be visualized by plotting the energies listed in the `gra
 ```bash
 python plot.py
 ```  
-This command tries to read the `out/graphene.dat.gnu` file and stores the band structure plot in a pdf file `graphene.pdf` in the same directory. 
+This command tries to read the `out/graphene.dat.gnu` file and stores the band structure plot in a pdf file `graphene-bands.pdf` in the same directory. 
+
+## Density of states 
+The [density of states](https://en.wikipedia.org/wiki/Density_of_states) describes the distribution of the electronic states over the energy. 
+The density of states (DOS) provides a useful way to look at the properties of the system such as the band gap. 
+Moreover, *projected* DOS provides information about the spin and orbital compositions of the bands. 
+Generally, to calculate the DOS accurately, one needs a dense mesh in the k space since the states need to be integrated over the Brillouin zone. 
+In this tutorial, we use a `24X24X1` mesh for the `nscf` calculation but for reliable and accurate results you would usually need more number of points, usually a `48X48X1` or denser mesh. Note that it is always a good idea to test the convergence of the DOS versus the number of the k points.    
+**Note**: Usually, for not so much dense meshes you would get spurious oscillations in the DOS plot which can be alleviated by increasing the number of k points. 
+
+To calculate the DOS in Quantum ESPRESSO, first you will need to have performed an `scf` calculation with the typical number of k points, e.g. `8X8X1`. 
+Then, by increasing the number of k points, e.g. to `24X24X1`, you perform an `nscf` calculation to get the energies over a dense mesh. 
+The last step is to run the `projwfc` command (with `projwfc.x` as the executable) which projects the wavefunction into atomic orbitals and calculates local density of states. 
+The following codes perform the described tasks.
+```bash 
+### density of states
+
+# scf calculation
+$ECHO "  running the scf calculation...\c"
+# reset the number of k points for the scf calculation 
+num_kx=16
+num_ky=16
+num_kz=1
+. $IN_DIR/$prefix.scf
+$PW_COMMAND < $prefix.scf.in > $prefix.scf.out
+check_failure $?
+$ECHO " done"
+
+# nscf calculation
+$ECHO "  running the nscf calculation...\c"
+# increase the number of k points 
+num_kx=24
+num_ky=24
+num_kz=1
+. $IN_DIR/$prefix.nscf
+$PW_COMMAND < $prefix.nscf.in > $prefix.nscf.out
+check_failure $?
+$ECHO " done"
+
+# project the wavefunctions 
+$ECHO "  Project wave functions...\c"
+# set the energy window 
+emin=-20.0
+emax=10.0
+. $IN_DIR/$prefix.projwfc
+$PROJ_COMMAND < $prefix.proj.in > $prefix.proj.out
+check_failure $?
+$ECHO " done"
+```  
+Here `emin` and `emax` determine the energy window corresponding to the density of states. 
+These two parameters along with a few other parameters are listed in the `in/graphene.proj` file. 
+The other parameters such as `ngauss` and `degauss` are related to the broadening of the DOS. You can find more information about these in the Quantum ESPRESSO documentation. 
+The output of the DOS calculation is written in files such as `out/graphene.pdos_...`. 
+
+## Plot the density of states 
+The total density of states can be visualized by plotting the data in the `out/graphene.pdos_tot` file. The *python* script in `plot.py` file is modified to perform this task. To plot the density of states you need to uncomment the last two lines of codes  
+```python 
+fig, ax = plt.subplots(1, 1)
+plot_dos_projected(fig, ax, path="out/graphene.pdos_tot", prefix="graphene", fermi=fermi, e_min = -20.0, e_max=10.0)
+```  
+And then run the following command in your terminal.  
+```bash
+python plot.py
+```  
+The density of states is then plotted in a pdf file `graphene-dos.pdf` in the same directory. 

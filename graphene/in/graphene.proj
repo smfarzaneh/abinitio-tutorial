@@ -1,0 +1,14 @@
+#!/bin/sh
+
+cat > $prefix.proj.in << EOF
+ &projwfc
+  prefix  = '$prefix'
+  outdir = '$TMP_DIR/'
+  ngauss = 0 
+  degauss = 0.01
+  Emin = $emin
+  Emax = $emax
+  DeltaE = 0.01
+  lsym = .TRUE.
+ /
+EOF
